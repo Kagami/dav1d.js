@@ -1,6 +1,6 @@
 {
   "name": "dav1d.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WebAssembly AV1 decoder",
   "main": "dav1d.js",
   "scripts": {
