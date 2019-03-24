@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "WebAssembly AV1 decoder",
   "main": "dav1d.js",
+  "scripts": {
+    "prepublishOnly": "make dav1d.wasm"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kagami/dav1d.js.git"

@@ -16,7 +16,7 @@ build/dist/lib64/libdav1d.a:
 		-Dlogging=false \
 	&& ninja -C build install
 
-dav1d.wasm: dav1d.c build/dist/lib64/libdav1d.a
+dav1d.wasm: build/dist/lib64/libdav1d.a dav1d.c
 	emcc $^ -DNDEBUG -O3 --llvm-lto 3 -Ibuild/dist/include -o $@ \
 		-s TOTAL_MEMORY=67108864
 
