@@ -56,6 +56,7 @@ void djs_free(djs *d) {
 }
 
 // Just copy planes.
+// FIXME(Kagami): Odd dimensions.
 // TODO(Kagami): We may return references to picture planes instead, to
 // avoid extra allocations. This would require slightly different API in
 // JS wrapper.
