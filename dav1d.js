@@ -45,11 +45,25 @@ function getRuntime() {
   };
 }
 
+function fetchAndInstantiate(data, url, imports) {
+  if (data) return WebAssembly.instantiate(data, imports);
+  const req = fetch(url, {credentials: "same-origin"});
+  if (WebAssembly.instantiateStreaming) {
+    return WebAssembly.instantiateStreaming(req, imports);
+  } else {
+    return req
+      .then(res => res.arrayBuffer())
+      .then(data => WebAssembly.instantiate(data, imports));
+  }
+}
+
 export function create(opts = {}) {
-  const data = opts.wasmData;
+  if (!opts.wasmURL && !opts.wasmData) {
+    return Promise.reject(new Error("Either wasmURL or wasmData shall be provided"));
+  }
   const runtime = getRuntime();
   const imports = {env: runtime};
-  return WebAssembly.instantiate(data, imports).then(wasm => {
+  return fetchAndInstantiate(opts.wasmData, opts.wasmURL, imports).then(wasm => {
     const d = new Dav1d({wasm, runtime});
     d._init();
     return d;
