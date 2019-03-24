@@ -1,0 +1,22 @@
+{
+  "name": "dav1d.js",
+  "version": "0.0.0",
+  "description": "WebAssembly AV1 decoder",
+  "main": "dav1d.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kagami/dav1d.js.git"
+  },
+  "keywords": [
+    "AV1",
+    "WebAssembly",
+    "Emscripten",
+    "dav1d"
+  ],
+  "author": "Kagami Hiiragi",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/Kagami/dav1d.js/issues"
+  },
+  "homepage": "https://github.com/Kagami/dav1d.js#readme"
+}

@@ -1,0 +1,66 @@
+diff --git a/include/common/validate.h b/include/common/validate.h
+index 3096f3d..1d2dc44 100644
+--- a/include/common/validate.h
++++ b/include/common/validate.h
+@@ -39,17 +39,12 @@
+ 
+ #define validate_input_or_ret_with_msg(x, r, ...) \
+     if (!(x)) { \
+-        fprintf(stderr, "Input validation check \'%s\' failed in %s!\n", \
+-                #x, __func__); \
+-        fprintf(stderr, __VA_ARGS__); \
+         debug_abort(); \
+         return r; \
+     }
+ 
+ #define validate_input_or_ret(x, r) \
+     if (!(x)) { \
+-        fprintf(stderr, "Input validation check \'%s\' failed in %s!\n", \
+-                #x, __func__); \
+         debug_abort(); \
+         return r; \
+     }
+diff --git a/meson.build b/meson.build
+index 96b7b1f..f062f56 100644
+--- a/meson.build
++++ b/meson.build
+@@ -103,7 +103,7 @@ if host_machine.system() == 'windows'
+     thread_dependency = []
+     thread_compat_dep = declare_dependency(sources : files('src/win32/thread.c'))
+ else
+-    thread_dependency = dependency('threads')
++    thread_dependency = []
+     thread_compat_dep = []
+ endif
+ 
+diff --git a/src/env.h b/src/env.h
+index 2d4cc26..13fdaf8 100644
+--- a/src/env.h
++++ b/src/env.h
+@@ -552,14 +552,12 @@ static inline int get_coef_skip_ctx(const TxfmInfo *const t_dim,
+         case TX_8X8:   MERGE_CTX(a, uint16_t, 0x3F3F);
+         case TX_16X16: MERGE_CTX(a, uint32_t, 0x3F3F3F3FU);
+         case TX_32X32: MERGE_CTX(a, uint64_t, 0x3F3F3F3F3F3F3F3FULL);
+-        default: abort();
+         }
+         switch (t_dim->lh) {
+         case TX_4X4:   MERGE_CTX(l, uint8_t,  0x3F);
+         case TX_8X8:   MERGE_CTX(l, uint16_t, 0x3F3F);
+         case TX_16X16: MERGE_CTX(l, uint32_t, 0x3F3F3F3FU);
+         case TX_32X32: MERGE_CTX(l, uint64_t, 0x3F3F3F3F3F3F3F3FULL);
+-        default: abort();
+         }
+ #undef MERGE_CTX
+ 
+diff --git a/src/log.c b/src/log.c
+index 4eb4e91..5eee551 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -39,7 +39,6 @@
+ void dav1d_log_default_callback(void *const cookie,
+                                 const char *const format, va_list ap)
+ {
+-    vfprintf(stderr, format, ap);
+ }
+ 
+ #if CONFIG_LOG

@@ -1,0 +1,119 @@
+// Must be in sync with emcc settings!
+const TOTAL_MEMORY = 64 * 1024 * 1024; // TODO(Kagami): Find optimal amount
+const TOTAL_STACK = 5626096; // TODO(Kagami): Find why bigger than 5MB
+const PAGE_SIZE = 64 * 1024;
+const TABLE_SIZE = 271; // NOTE(Kagami): Depends on the number of
+                        // function pointers in target library, seems
+                        // like no way to know in general case
+
+function getRuntime() {
+  let dynamicTop = TOTAL_STACK;
+  const table = new WebAssembly.Table({
+    initial: TABLE_SIZE,
+    maximum: TABLE_SIZE,
+    element: "anyfunc",
+  });
+  const memory = new WebAssembly.Memory({
+    initial: TOTAL_MEMORY / PAGE_SIZE,
+    maximum: TOTAL_MEMORY / PAGE_SIZE,
+  });
+  const HEAPU8 = new Uint8Array(memory.buffer);
+  return {
+    table: table,
+    memory: memory,
+    sbrk: (increment) => {
+      const oldDynamicTop = dynamicTop;
+      dynamicTop += increment;
+      return oldDynamicTop;
+    },
+    emscripten_memcpy_big: (dest, src, num) => {
+      HEAPU8.set(HEAPU8.subarray(src, src+num), dest);
+    },
+    // Empty stubs for dav1d.
+    pthread_cond_wait: (cond, mutex) => 0,
+    pthread_cond_signal: (cond) => 0,
+    pthread_cond_destroy: (cond) => 0,
+    pthread_cond_init: (cond, attr) => 0,
+    pthread_cond_broadcast: (cond) => 0,
+    pthread_join: (thread, res) => 0,
+    pthread_create: (thread, attr, func, arg) => 0,
+    // Emscripten debug.
+    // abort: () => {},
+    // __lock: () => {},
+    // __unlock: () => {},
+    // djs_log: (msg) => console.log(msg),
+  };
+}
+
+export function create(opts = {}) {
+  const data = opts.wasmData;
+  const runtime = getRuntime();
+  const imports = {env: runtime};
+  return WebAssembly.instantiate(data, imports).then(wasm => {
+    const d = new Dav1d({wasm, runtime});
+    d._init();
+    return d;
+  });
+}
+
+const DJS_FORMAT_YUV = 0;
+const DJS_FORMAT_BMP = 1;
+
+class Dav1d {
+  constructor({wasm, runtime}) {
+    this.FFI = wasm.instance.exports;
+    this.buffer = runtime.memory.buffer;
+    this.HEAPU8 = new Uint8Array(this.buffer);
+    this.ref = null;
+  }
+  _init() {
+    this.ref = this.FFI.djs_init();
+    if (!this.ref) throw new Error("error in djs_init");
+  }
+  _decodeFrame(obu, format, unsafe) {
+    if (!ArrayBuffer.isView(obu)) {
+      obu = new Uint8Array(obu);
+    }
+    const obuRef = this.FFI.djs_alloc_obu(obu.byteLength);
+    if (!obuRef) throw new Error("error in djs_alloc_obu");
+    this.HEAPU8.set(obu, obuRef);
+    const frameRef = this.FFI.djs_decode_obu(this.ref, obuRef, obu.byteLength, format);
+    if (!frameRef) throw new Error("error in djs_decode");
+    const frameInfo = new Uint32Array(this.buffer, frameRef, 4);
+    const width = frameInfo[0];
+    const height = frameInfo[1];
+    const size = frameInfo[2];
+    const dataRef = frameInfo[3];
+    const srcData = new Uint8Array(this.buffer, dataRef, size);
+    if (unsafe) {
+      this.FFI.djs_free_frame(frameRef);
+      return srcData;
+    }
+    const data = new Uint8Array(size);
+    data.set(srcData);
+    this.FFI.djs_free_frame(frameRef);
+    return {width, height, data};
+  }
+  /**
+   * Frame decoding, copy of frame data is returned.
+   */
+  decodeFrameAsYUV(obu) {
+    return this._decodeFrame(obu, DJS_FORMAT_YUV, false);
+  }
+  decodeFrameAsBMP(obu) {
+    return this._decodeFrame(obu, DJS_FORMAT_BMP, false);
+  }
+  /**
+   * Unsafe decoding with minimal overhead. We return pointer to WASM
+   * memory, so you can't call any dav1d.js methods while keeping
+   * reference to it.
+   */
+  unsafeDecodeFrameAsYUV(obu) {
+    return this._decodeFrame(obu, DJS_FORMAT_YUV, true);
+  }
+  unsafeDecodeFrameAsBMP(obu) {
+    return this._decodeFrame(obu, DJS_FORMAT_BMP, true);
+  }
+}
+
+export default {create};

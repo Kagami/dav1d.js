@@ -1,0 +1,4 @@
+[submodule "dav1d"]
+	path = dav1d
+	url = https://code.videolan.org/videolan/dav1d.git
+	ignore = dirty
