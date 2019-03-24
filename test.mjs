@@ -31,7 +31,14 @@ import dav1d from "./dav1d.mjs";
   console.log("decoded frame ("+data2.byteLength+" bytes)");
   if (isNode) {
     fs.writeFileSync("test2.bmp", data2);
+  } else {
+    const blob = new Blob([data2], {type: "image/bmp"});
+    const blobURL = URL.createObjectURL(blob);
+    const img = document.createElement("img");
+    img.src = blobURL;
+    document.body.appendChild(img);
   }
+  d.unsafeCleanup();
 
 })().catch(err => {
   console.error(err);

@@ -60,11 +60,14 @@ const DJS_FORMAT_YUV = 0;
 const DJS_FORMAT_BMP = 1;
 
 class Dav1d {
+  /* Private methods, shall not be used */
+
   constructor({wasm, runtime}) {
     this.FFI = wasm.instance.exports;
     this.buffer = runtime.memory.buffer;
     this.HEAPU8 = new Uint8Array(this.buffer);
     this.ref = null;
+    this.lastFrameRef = null;
   }
   _init() {
     this.ref = this.FFI.djs_init();
@@ -86,7 +89,7 @@ class Dav1d {
     const dataRef = frameInfo[3];
     const srcData = new Uint8Array(this.buffer, dataRef, size);
     if (unsafe) {
-      this.FFI.djs_free_frame(frameRef);
+      this.lastFrameRef = frameRef;
       return srcData;
     }
     const data = new Uint8Array(size);
@@ -94,6 +97,9 @@ class Dav1d {
     this.FFI.djs_free_frame(frameRef);
     return {width, height, data};
   }
+
+  /* Public API methods */
+
   /**
    * Frame decoding, copy of frame data is returned.
    */
@@ -103,16 +109,24 @@ class Dav1d {
   decodeFrameAsBMP(obu) {
     return this._decodeFrame(obu, DJS_FORMAT_BMP, false);
   }
+
   /**
-   * Unsafe decoding with minimal overhead. We return pointer to WASM
-   * memory, so you can't call any dav1d.js methods while keeping
-   * reference to it.
+   * Unsafe decoding with minimal overhead, pointer to WebAssembly
+   * memory is returned. User can't call any dav1d.js methods while
+   * keeping reference to it and shall call `unsafeCleanup` when
+   * finished using the data.
    */
   unsafeDecodeFrameAsYUV(obu) {
     return this._decodeFrame(obu, DJS_FORMAT_YUV, true);
   }
   unsafeDecodeFrameAsBMP(obu) {
     return this._decodeFrame(obu, DJS_FORMAT_BMP, true);
+  }
+  unsafeCleanup() {
+    if (this.lastFrameRef) {
+      this.FFI.djs_free_frame(this.lastFrameRef);
+      this.lastFrameRef = null;
+    }
   }
 }
 
