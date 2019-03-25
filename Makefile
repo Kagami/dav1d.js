@@ -1,7 +1,7 @@
 all: dav1d.wasm
 
 patch:
-	cd dav1d && patch -p1 <../dav1d.patch
+	patch -d dav1d -p1 <dav1d.patch
 
 build/dist/lib64/libdav1d.a:
 	meson dav1d build \
