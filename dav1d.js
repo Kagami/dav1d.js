@@ -80,8 +80,8 @@ class Dav1d {
     this.FFI = wasm.instance.exports;
     this.buffer = runtime.memory.buffer;
     this.HEAPU8 = new Uint8Array(this.buffer);
-    this.ref = null;
-    this.lastFrameRef = null;
+    this.ref = 0;
+    this.lastFrameRef = 0;
   }
   _init() {
     this.ref = this.FFI.djs_init();
@@ -139,7 +139,7 @@ class Dav1d {
   unsafeCleanup() {
     if (this.lastFrameRef) {
       this.FFI.djs_free_frame(this.lastFrameRef);
-      this.lastFrameRef = null;
+      this.lastFrameRef = 0;
     }
   }
 }
