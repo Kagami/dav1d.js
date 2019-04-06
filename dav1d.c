@@ -269,8 +269,8 @@ int main() {
   clock_t t = clock();
   /*3*/djs_frame *frame = djs_decode_obu(d, obu, obu_len, DJS_FORMAT_BMP);
   t = clock() - t;
-  printf("decoded %ux%u frame (%u bytes) in %f seconds\n",
-         frame->width, frame->height, frame->size, (double)t/CLOCKS_PER_SEC);
+  printf("decoded %ux%u frame (%u bytes) in %.3fms\n",
+         frame->width, frame->height, frame->size, (double)t/CLOCKS_PER_SEC*1000);
   FILE *fout = fopen("test.bmp", "wb");
   fwrite(frame->data, frame->size, 1, fout);
   fclose(fout);
