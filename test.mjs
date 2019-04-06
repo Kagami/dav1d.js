@@ -42,5 +42,7 @@ import dav1d from "./dav1d.mjs";
 
 })().catch(err => {
   console.error(err);
-  process.exit(1);
+  if (isNode) {
+    process.exit(1);
+  }
 });

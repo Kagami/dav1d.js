@@ -6,7 +6,9 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #else
+#include <time.h>
 #include <stdio.h>
+#include <assert.h>
 #define EMSCRIPTEN_KEEPALIVE
 #endif
 
@@ -262,9 +264,13 @@ int main() {
   /*1*/djs *d = djs_init();
 
   /*2*/uint8_t *obu = djs_alloc_obu(obu_len);
-  fread(obu, obu_len, 1, fin);
+  size_t len = fread(obu, 1, obu_len, fin);
+  assert(len == obu_len);
+  clock_t t = clock();
   /*3*/djs_frame *frame = djs_decode_obu(d, obu, obu_len, DJS_FORMAT_BMP);
-  printf("decoded %ux%u frame (%u bytes)\n", frame->width, frame->height, frame->size);
+  t = clock() - t;
+  printf("decoded %ux%u frame (%u bytes) in %f seconds\n",
+         frame->width, frame->height, frame->size, (double)t/CLOCKS_PER_SEC);
   FILE *fout = fopen("test.bmp", "wb");
   fwrite(frame->data, frame->size, 1, fout);
   fclose(fout);
