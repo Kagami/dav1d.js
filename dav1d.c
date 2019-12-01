@@ -116,11 +116,12 @@ static void fill_bmp_data_from_420(const Dav1dPicture *pic, uint8_t *output, int
   int strideY = pic->stride[0];
   int strideCb = pic->stride[1];
   int strideCr = pic->stride[1];
-  int outPtr0 = 0;
-  int outPtr1 = outStride;
   int ydec = 0;
 
   for (int y = 0; y < height; y += 2) {
+    int outPtr0 = y * outStride;
+    int outPtr1 = outPtr0 + outStride;
+
     int Y0Ptr = y * strideY;
     int Y1Ptr = Y0Ptr + strideY;
     int CbPtr = ydec * strideCb;
@@ -157,8 +158,6 @@ static void fill_bmp_data_from_420(const Dav1dPicture *pic, uint8_t *output, int
       output[outPtr1 + 2] = clamp((multY + multCrR) >> 8);
       outPtr1 += 3;
     }
-    outPtr0 += outStride;
-    outPtr1 += outStride;
     ydec++;
   }
 }
